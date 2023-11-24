@@ -1,0 +1,20 @@
+from docx import Document
+from docx.shared import Inches
+
+# Đường dẫn đến tệp Word của bạn
+file_path = 'E:\ThnBih_HK3\MatMaHoc\project\code\est.docx'
+
+# Đường dẫn đến ảnh của bạn
+image_path = 'E:\ThnBih_HK3\MatMaHoc\project\code\qrcode.png'
+
+# Mở tệp Word
+document = Document(file_path)
+
+# Thêm một trang mới vào tài liệu
+document.add_page_break()
+
+# Thêm hình ảnh vào cuối trang mới
+document.add_picture(image_path, width=Inches(5.0), height=Inches(5.0))
+
+# Lưu tài liệu
+document.save(file_path)
