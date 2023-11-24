@@ -1,3 +1,5 @@
+import OpenSSL
+
 from PDFNetPython3.PDFNetPython import *
 
 
