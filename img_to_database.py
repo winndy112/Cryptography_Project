@@ -1,5 +1,13 @@
 import mysql.connector
 
+#trong mysql cần
+#  tạo database: CREATE DATABASE test_img;
+#  tạo table: CREATE TABLE images (
+#               id INT AUTO_INCREMENT PRIMARY KEY,
+#               name VARCHAR(255),
+#               data LONGBLOB
+#             );  
+
 # Kết nối tới cơ sở dữ liệu MySQL
 mydb = mysql.connector.connect(
   host="localhost",
@@ -8,7 +16,7 @@ mydb = mysql.connector.connect(
   database="test_img"
 )
 
-# Đọc dữ liệu của hình ảnh từ file PNG
+# Đọc dữ liệu của hình ảnh từ file PNG, chọn đường dẫn
 with open("E:\ThnBih_HK3\MatMaHoc\project\code\qrcode.png", "rb") as file:
     image_data = file.read()
 
