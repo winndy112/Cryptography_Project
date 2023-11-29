@@ -7,7 +7,7 @@ mydb = mysql.connector.connect(
   host="localhost",
   user="root",
   password="123456789",
-  database="test_img"
+  database="DATA_FALCON"
 )
 
 # Thực hiện câu lệnh SELECT để truy xuất hình ảnh từ cơ sở dữ liệu
