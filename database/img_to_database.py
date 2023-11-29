@@ -1,19 +1,11 @@
 import mysql.connector
 
-#trong mysql cần
-#  tạo database: CREATE DATABASE test_img;
-#  tạo table: CREATE TABLE images (
-#               id INT AUTO_INCREMENT PRIMARY KEY,
-#               name VARCHAR(255),
-#               data LONGBLOB
-#             );  
-
 # Kết nối tới cơ sở dữ liệu MySQL
 mydb = mysql.connector.connect(
   host="localhost",
   user="root",
   password="123456789",
-  database="test_img"
+  database="DATA_FALCON"
 )
 
 # Đọc dữ liệu của hình ảnh từ file PNG, chọn đường dẫn
