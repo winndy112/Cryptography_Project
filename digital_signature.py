@@ -1,9 +1,9 @@
 import sys
 sys.path.append('/falcon')
-import qr
 from falcon import falcon
 import base64
 
+import fitz
 
 # GLOBAL VARIABLES
 KEY_LENGTH = 512
@@ -31,10 +31,12 @@ class digital_signature():
     '''
 
     def signing_pdf(self, input_file: str) -> str:
-        with open(input_file, "rb") as file:
-            message = file.read()
-        sig = self.sk.sign(message)
+        document = fitz.open(input_file)
+        page = document[0]
+        message = page.get_text()
+        sig = self.sk.sign(message.encode())
         sign_b64 = base64.b64encode(sig)
+        document.close()
         return sign_b64
     
     '''
@@ -42,8 +44,9 @@ class digital_signature():
     '''
 
     def verify(self, sign_b64: str, input_file: str) -> bool:
-        file = open(input_file, "rb")
-        message= file.read()
+        document = fitz.open(input_file)
+        page = document[0]
+        message = page.get_text().encode()
         sign = base64.b64decode(sign_b64)
         return (self.pk.verify(message, sign))
 
