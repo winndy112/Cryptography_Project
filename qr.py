@@ -1,49 +1,37 @@
 # pip install qrcode
 import qrcode
-from PyPDF2 import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
-from PIL import Image
+import fitz
+
 
 # hàm tạo QR dựa bao gồm signature và certificate
 def generate_qr(data, output_file):
     qr = qrcode.QRCode(version=40)
     qr.add_data(data)
     qr.make()
+    image_size = (370, 370)
     image = qr.make_image()
-    image.save(output_file)
+    resized_image = image.resize(image_size)
+    resized_image.save(output_file)
 
-def add_qr_code_to_pdf(qr_code_path, pdf_path, output_pdf_path):
-
-    pdf_reader = PdfReader(pdf_path)  
-    page = pdf_reader.pages[0]
-
-    qr_code_img = Image.open(qr_code_path)
-    resized_image = qr_code_img.resize((370, 370))
-    resized_image.save(qr_code_path)
-    img_width, img_height = qr_code_img.size
+def add_qr_code_to_pdf(pdf_path, image_file, output_file):
+    # Open the PDF file
+    pdf_document = fitz.open(pdf_path)
+    # Get the first page of the PDF document
     
-    page_width = page.mediabox[2]
+    pdf_page = pdf_document[0]
+    page_size = pdf_page.mediabox
+    image_rectangle = fitz.Rect(20, page_size.height - 120, 120, page_size.height - 20)
+    # add the image
+    pdf_page.insert_image(image_rectangle, filename=image_file)
+    pdf_document.save(output_file)
     
-    print(page.mediabox)
-    x_position = int((page_width - img_width) / 2)
-    # print(type(x_position))
-    y_position = 0
 
-    img_canvas = canvas.Canvas(output_pdf_path)
-    img_canvas.drawImage(qr_code_path, x_position, y_position,  
-                        width=img_width, height=img_height)
-    img_canvas.save()
+def scan_qr(inpurt_file):
 
-    with open(output_pdf_path, 'wb') as output_pdf_file:
-        writer = PdfWriter()
-        writer.add_page(page)
-        writer.write(output_pdf_file)
-
-# def scan_qr(inpurt_file):
+# def detach_qr(input_file):
 
 if __name__ == "__main__":
-    input_file = "./test/Projects-Topics.pdf"
+    input_file = "./test/sample_qual.pdf"
     qr_code_path = './image/qrcode.png'
-    output_file = "./test/signed_Projects-Topics.pdf"
-
-    add_qr_code_to_pdf(qr_code_path, input_file, output_file)
+    output_file = "./test/signed.pdf"
+    add_qr_code_to_pdf( input_file, qr_code_path, output_file)
