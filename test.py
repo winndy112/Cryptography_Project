@@ -73,36 +73,36 @@
 #     return True
 
 
-import fitz  # PyMuPDF
+# import fitz  # PyMuPDF
 
-def attach_image_to_pdf(pdf_path, image_path, output_pdf_path, x, y):
-    # Open the PDF file
-    pdf_document = fitz.open(pdf_path)
+# def attach_image_to_pdf(pdf_path, image_path, output_pdf_path, x, y):
+#     # Open the PDF file
+#     pdf_document = fitz.open(pdf_path)
 
-    # Open the image file
-    image_document = fitz.open(image_path)
+#     # Open the image file
+#     image_document = fitz.open(image_path)
 
-    # Get the first page of the PDF document
-    pdf_page = pdf_document[0]
+#     # Get the first page of the PDF document
+#     pdf_page = pdf_document[0]
 
-    # Get the first page of the image document
-    image_page = image_document[0]
+#     # Get the first page of the image document
+#     image_page = image_document[0]
 
-    # Copy the image to the PDF page
-    pdf_page.insert_image((x, y), image_page)
+#     # Copy the image to the PDF page
+#     pdf_page.insert_image((x, y), image_page)
 
-    # Save the modified PDF
-    pdf_document.save(output_pdf_path)
+#     # Save the modified PDF
+#     pdf_document.save(output_pdf_path)
     
-    # Close the PDF and image documents
-    pdf_document.close()
-    image_document.close()
+#     # Close the PDF and image documents
+#     pdf_document.close()
+#     image_document.close()
 
-# Example usage:
-input_file = "./test/Projects-Topics.pdf"
-qr_code_path = './image/qrcode.png'
-output_file = "./test/signed_Projects-Topics.pdf"
-x_position = 0  # Adjust the X position of the image
-y_position = 0  # Adjust the Y position of the image
+# # Example usage:
+# input_file = "./test/Projects-Topics.pdf"
+# qr_code_path = './image/qrcode.png'
+# output_file = "./test/signed_Projects-Topics.pdf"
+# x_position = 0  # Adjust the X position of the image
+# y_position = 0  # Adjust the Y position of the image
 
-attach_image_to_pdf(input_file, qr_code_path, output_file, x_position, y_position)
+# attach_image_to_pdf(input_file, qr_code_path, output_file, x_position, y_position)

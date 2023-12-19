@@ -7,6 +7,7 @@ import cv2
 '''
 hàm tạo QR dựa bao gồm signature và certificate
 '''
+
 def generate_qr(data, output_file):
     qr = qrcode.QRCode(version=40)
     qr.add_data(data)
@@ -34,6 +35,7 @@ def add_qr_code_to_pdf(pdf_path, image_file, output_file):
 '''
 Hàm xóa mã QR ra khỏi văn bằng trước khi tiến hành verify
 '''
+
 def remove_qr_code_from_pdf(pdf_path, output_file):
     # Open the PDF file
     document = fitz.open(pdf_path)
