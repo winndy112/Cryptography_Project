@@ -38,11 +38,13 @@ class digital_signature():
         sign_b64 = base64.b64encode(sig)
         document.close()
         self.signature = sign_b64
+
+    '''
+    Hàm thêm chữ kí vào trường metadata của văn bằng pdf
+    '''
     def add_signature_to_metadata(self, pdf_file, output_file):
         try:
             # Open the PDF file
-            meta = self.signature
-            
             reader =PyPDF2.PdfReader(pdf_file)
             writer = PyPDF2.PdfWriter()
             metadata= reader.metadata
@@ -63,7 +65,7 @@ class digital_signature():
                 '/Producer': producer,
                 '/Signature': None
             }
-            extracted_metadata['/Signature'] = self.signature
+            extracted_metadata['/Signature'] = self.signature.decode()
             writer.append_pages_from_reader(reader)
             for key in extracted_metadata:
                 writer.add_metadata({PyPDF2.generic.create_string_object(key): PyPDF2.generic.create_string_object(str(extracted_metadata[key]))})
@@ -71,14 +73,22 @@ class digital_signature():
                 writer.write(fout)
         except Exception as e:
             print(f"Error adding signature to PDF metadata: {e}")
+    def dettach_signature(self, input_pdf):
+        with open(input_pdf, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            meta = pdf_reader.metadata
+        if "/Signature" in meta:
+            self.signature = (str(meta['/Signature']).encode())
+        
+
     '''
     hàm xác thực chữ kí số dựa trên 3 input: chữ kí số encoded base64, file văn bằng cần xác thực và public key
     '''
-    def verify(self, sign_b64: str, input_file: str) -> bool:
+    def verify(self, input_file: str) -> bool:
         document = fitz.open(input_file)
         page = document[0]
         message = page.get_text().encode()
-        sign = base64.b64decode(sign_b64)
+        sign = base64.b64decode(self.signature)
         return (self.pk.verify(message, sign))
     '''
     Hàm lưu key vào file pem

@@ -1,8 +1,6 @@
 # pip install qrcode
 import qrcode
 import fitz
-import cv2
-import os
 
 '''
 hàm tạo QR dựa bao gồm signature và certificate và gán vào pdf
