@@ -4,7 +4,7 @@ from falcon import falcon
 import base64
 import pickle
 import fitz
-
+import PyPDF2 
 # GLOBAL VARIABLES
 KEY_LENGTH = 512
 
@@ -14,6 +14,7 @@ class digital_signature():
     khởi tạo
     '''
     def __init__(self):
+        self.signature = None
         self.sk = None
         self.pk = None
         
@@ -36,8 +37,40 @@ class digital_signature():
         sig = self.sk.sign(message.encode())
         sign_b64 = base64.b64encode(sig)
         document.close()
-        return sign_b64
-    
+        self.signature = sign_b64
+    def add_signature_to_metadata(self, pdf_file, output_file):
+        try:
+            # Open the PDF file
+            meta = self.signature
+            
+            reader =PyPDF2.PdfReader(pdf_file)
+            writer = PyPDF2.PdfWriter()
+            metadata= reader.metadata
+            title = metadata.title
+            author = metadata.author
+            subject = metadata.subject
+            creator = metadata.creator
+            producer = metadata.producer
+            creation_date = metadata.creation_date.strftime("D:%Y%m%d%H%M%S%z%H'%M'")
+            modification_date = metadata.modification_date.strftime("D:%Y%m%d%H%M%S%z%H'%M'")
+            extracted_metadata = {
+                '/Title': title,
+                '/Author': author,
+                '/Subject': subject,
+                '/Creator': creator,
+                '/CreationDate': creation_date,
+                '/ModDate': modification_date,
+                '/Producer': producer,
+                '/Signature': None
+            }
+            extracted_metadata['/Signature'] = self.signature
+            writer.append_pages_from_reader(reader)
+            for key in extracted_metadata:
+                writer.add_metadata({PyPDF2.generic.create_string_object(key): PyPDF2.generic.create_string_object(str(extracted_metadata[key]))})
+            with open(output_file, 'wb') as fout:
+                writer.write(fout)
+        except Exception as e:
+            print(f"Error adding signature to PDF metadata: {e}")
     '''
     hàm xác thực chữ kí số dựa trên 3 input: chữ kí số encoded base64, file văn bằng cần xác thực và public key
     '''
@@ -105,13 +138,15 @@ class digital_signature():
             return f"Error loading public key: {e}"
 
 
+# '''
 # Example Usage:
+# '''
 # a = digital_signature()
 # a.create_key()
-# a.SaveSecret2Pem("Root_CA\\private.pem")
-# a.SavePublic2Pem("Root_CA\\public.pem")
-b = digital_signature()
-b.load_private_key("Root_CA\\private.pem")
-b.load_public_key("Root_CA\\public.pem")       
-print(b.sk)
-print(b.pk)
+# a.SaveSecret2Pem("private.pem")
+# a.SavePublic2Pem("public.pem")
+# b = digital_signature()
+# b.load_private_key("private.pem")
+# b.load_public_key("public.pem")       
+# print(b.sk)
+# print(b.pk)

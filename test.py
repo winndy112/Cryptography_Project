@@ -106,3 +106,20 @@
 # y_position = 0  # Adjust the Y position of the image
 
 # attach_image_to_pdf(input_file, qr_code_path, output_file, x_position, y_position)
+
+
+import PyPDF2
+pdf_file = "test/signed_qual.pdf"
+
+with open(pdf_file, 'rb') as file:
+    #signature = 'test'
+    # Create a PDF reader
+    pdf_reader = PyPDF2.PdfReader(file)
+    # Get the document information (metadata)
+    meta = pdf_reader.metadata
+    print(meta)
+    # pdf_writer = PyPDF2.PdfWriter()
+    # xmp_metadata = f"signature"
+    # pdf_writer.add_metadata({PyPDF2.generic.NameObject('/Signature'): xmp_metadata.encode()})
+    # with open('output.pdf', 'wb') as fout:
+    #             pdf_writer.write(fout)

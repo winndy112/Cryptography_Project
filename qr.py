@@ -2,36 +2,35 @@
 import qrcode
 import fitz
 import cv2
-
+import os
 
 '''
-hàm tạo QR dựa bao gồm signature và certificate
+hàm tạo QR dựa bao gồm signature và certificate và gán vào pdf
 '''
 
-def generate_qr(data, output_file):
+def generateQr_and_add_to_pdf(data, input_pdf, image_qr):
+    #tạo qr code
     qr = qrcode.QRCode(version=40)
     qr.add_data(data)
     qr.make()
     image_size = (370, 370)
     image = qr.make_image()
     resized_image = image.resize(image_size)
-    resized_image.save(output_file)
+    resized_image.save(image_qr)
 
-'''
-hàm gán mã QR vào văn bằng
-'''
-
-def add_qr_code_to_pdf(pdf_path, image_file, output_file):
     # Open the PDF file
-    pdf_document = fitz.open(pdf_path)
+    pdf_document = fitz.open(input_pdf)
     # Get the first page of the PDF document
     
     pdf_page = pdf_document[0]
     page_size = pdf_page.mediabox
     image_rectangle = fitz.Rect(20, page_size.height - 120, 120, page_size.height - 20)
     # add the image
-    pdf_page.insert_image(image_rectangle, filename=image_file)
-    pdf_document.save(output_file)
+    pdf_page.insert_image(image_rectangle, filename=image_qr)
+    # os.remove(input_pdf)
+    pdf_document.saveIncr()
+    
+
 '''
 Hàm xóa mã QR ra khỏi văn bằng trước khi tiến hành verify
 '''
