@@ -1,11 +1,12 @@
 import base64
 
 # Đường dẫn đến tệp tin chứa public key
-public_key_file = "public.txt"
+public_key_file = "public.pem"
 
 # Đọc public key từ tệp tin
 with open(public_key_file, "r") as file:
-    public_key = file.read().strip()
+    public_key = file.read().replace("-- Begin Falcon Public Key --", "").replace("-- End Falcon Public Key --", "").strip()
+    #public_key = file.read().strip()
 
 # Tạo thông tin chứng chỉ dưới dạng dictionary
 certificate_info = {
