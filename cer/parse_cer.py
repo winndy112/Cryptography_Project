@@ -8,8 +8,8 @@ import pickle
 cer_file = "certificate.cer"
 
 # Đọc nội dung tệp cer
-with open(cer_file, "rb") as file:
-    cert_base64 = file.read().replace(b"---BEGIN CERTIFICATE---", b"").replace(b"---END CERTIFICATE---", b"").strip()
+with open(cer_file, "r") as file:
+    cert_base64 = file.read().replace("---BEGIN CERTIFICATE---", "").replace("---END CERTIFICATE---", "").strip()
 
 # Giải mã base64 để nhận lại nội dung chứng chỉ
 cert_content = base64.b64decode(cert_base64).decode("utf-8")
@@ -24,7 +24,8 @@ for line in lines:
 decoded_public_key = base64.b64decode(cert_info['Public Key'])
 restored_key = pickle.loads(decoded_public_key)
 
-# Check bằng cách in thử thông tin từ dictionary
-#print(f"Hiệu trưởng: {cert_info['Username']}")
+# In thông tin từ dictionary
+#print(f"Hiệu trưởng: {cert_info['Author']}")
 #print(f"Trường: {cert_info['Address']}")
-#print(f"Raw Public Key: {restored_key} \n")
+print(f"Raw Public Key: {restored_key} \n")
+
