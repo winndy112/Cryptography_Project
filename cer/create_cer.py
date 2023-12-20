@@ -17,6 +17,11 @@ cert_content = f"Username: {username}\nAddress: {address}\nPublic Key: {public_k
 # Chuyển đổi nội dung cert thành base64
 cert_base64 = base64.b64encode(cert_content.encode("utf-8"))
 
+begin = b"---BEGIN CERTIFICATE---\n"
+end = b"\n---END CERTIFICATE---\n"
+
 # Lưu tệp cer
 with open("certificate.cer", "wb") as cert_file:
+    cert_file.write(begin)
     cert_file.write(cert_base64)
+    cert_file.write(end)
