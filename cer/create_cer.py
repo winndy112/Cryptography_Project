@@ -7,12 +7,20 @@ public_key_file = "public.txt"
 with open(public_key_file, "r") as file:
     public_key = file.read().strip()
 
-# Tạo thông tin chứng chỉ
-username = "Nguyễn Hoàng Tú Anh"
-address = "UIT"
+# Tạo thông tin chứng chỉ dưới dạng dictionary
+certificate_info = {
+    "Subject": "Chữ Kí ABC",
+    "Author": "Nguyễn Hoàng Tú Anh",
+    "Address": "UIT",
+    "Public Key": public_key,
+    "Serial Number": "123456",
+    "Valid Dates": "2023-01-01 to 2023-12-31",
+    "Additional Info 1": "Some additional information",
+    "Additional Info 2": "More details",
+}
 
 # Tạo nội dung tệp cer
-cert_content = f"Username: {username}\nAddress: {address}\nPublic Key: {public_key}"
+cert_content = "\n".join([f"{key}: {value}" for key, value in certificate_info.items()])
 
 # Chuyển đổi nội dung cert thành base64
 cert_base64 = base64.b64encode(cert_content.encode("utf-8"))
