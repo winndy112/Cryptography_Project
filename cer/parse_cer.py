@@ -10,7 +10,8 @@ cer_file = "certificate.cer"
 
 # Đọc nội dung tệp cer
 with open(cer_file, "rb") as file:
-    cert_base64 = file.read()
+    # Read the content excluding "BEGIN CERTIFICATE" and "END CERTIFICATE" lines
+    cert_base64 = file.read().replace(b"---BEGIN CERTIFICATE---", b"").replace(b"---END CERTIFICATE---", b"").strip()
 
 # Giải mã base64 để nhận lại nội dung chứng chỉ
 cert_content = base64.b64decode(cert_base64).decode("utf-8")
@@ -22,8 +23,6 @@ address = lines[1].split(": ")[1]
 public_key = lines[2].split(": ")[1]
 
 decoded_public_key = base64.b64decode(public_key)
-# Now you can use the decoded_public_key directly without pickling it
-# If you still want to pickle it, use pickle.dumps, not pickle.loads
 restored_key = pickle.loads(decoded_public_key)
 
 
