@@ -24,7 +24,7 @@ for line in lines:
 decoded_public_key = base64.b64decode(cert_info['Public Key'])
 restored_key = pickle.loads(decoded_public_key)
 
-# In thông tin từ dictionary
+# In thông tin từ dictionary để check
 #print(f"Hiệu trưởng: {cert_info['Author']}")
 #print(f"Trường: {cert_info['Address']}")
 print(f"Raw Public Key: {restored_key} \n")
