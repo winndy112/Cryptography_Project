@@ -2,15 +2,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from models import Base, Students, Ins, Quals
-from passlib.context import CryptContext # for hash password
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from typing import Annotated
 from fastapi.responses import JSONResponse
 import base64
-from fastapi.security import OAuth2PasswordRequestForm
-from jose import jwt
-from datetime import timedelta, datetime
+
 
 def get_db():
     db = SessionLocal()

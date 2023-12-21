@@ -9,6 +9,7 @@ function selectOption(option) {
 }
 
 
+// bug
 function verify(event) {
     event.preventDefault(); // Prevent the default form submission
 
@@ -113,11 +114,12 @@ function login(event) {
     event.preventDefault();
     var email = document.getElementById("loginEmail").value;
     var pass = document.getElementById("loginPassword").value;
+
     var requestData = {
-        email_address : email,
-        password : pass
+        email_address: email,
+        password: pass
     };
-    
+
     fetch('http://127.0.0.1:8001/token', {
         method: 'POST',
         body: JSON.stringify(requestData),
@@ -130,12 +132,10 @@ function login(event) {
         })
         .then(data => {
             console.log('API Response:', data);
+            localStorage.setItem('accessToken', data.access_token);
             alert("Successfull log in!")
             // Bootstrap raise popups
-            setTimeout(function () {
-                showFileSigningForm();  // Fix: Correct the function call
-            }, 2000);
-
+            showFileSigningForm()
         })
         .catch(error => {
             // Bootstrap raise popups
@@ -147,7 +147,6 @@ function login(event) {
 
 function signup(event) {
     event.preventDefault();
-    var formData = new FormData();
     var institutionName = document.getElementById("institutionName").value;
     var authority = document.getElementById("authority").value;
     var signupEmail = document.getElementById("signupEmail").value;
@@ -168,7 +167,7 @@ function signup(event) {
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.error}`);
-            }d
+            } d
         })
         .then(data => {
             console.log('API Response:', data);
@@ -199,6 +198,85 @@ function signup(event) {
             alert("Fail to sign up. Please try again!");
         });
 }
+
+function getAccessToken() {
+    // Retrieve the token from localStorage
+    return localStorage.getItem('accessToken');
+}
+
+function signFile(event) {
+    event.preventDefault();
+
+    var id = document.getElementById("id_sv").value;
+    var school = document.getElementById("school").value;
+    var firstName = document.getElementById("firstName").value;
+    var lastName = document.getElementById("lastName").value;
+    var inputFile = document.getElementById("inputFile").files[0];
+    var privateKey = document.getElementById("privateKey").files[0];
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        var inputFileBase64 = e.target.result.split(",")[1];
+        reader.onload = function (e) {
+            var privateKeyBase64 = e.target.result.split(",")[1];
+
+            // Create a JSON object with the form data and file contents
+            var jsonData = {
+                id_sv: id,
+                school: school,
+                firstName: firstName,
+                lastName: lastName,
+                inputFile: inputFileBase64,
+                privateKey: privateKeyBase64,
+            };
+            console.log("JSON Data:", jsonData);
+            fetch('http://127.0.0.1:8001/sign_file', {
+                method: 'POST',
+                body: JSON.stringify(jsonData),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getAccessToken(),
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(responseData => {
+                    const pdfContentBase64 = responseData.pdf_content;
+
+                    // Decode base64 and create a Blob
+                    const binaryData = atob(pdfContentBase64);
+                    const arrayBuffer = new ArrayBuffer(binaryData.length);
+                    const uint8Array = new Uint8Array(arrayBuffer);
+
+                    for (let i = 0; i < binaryData.length; i++) {
+                        uint8Array[i] = binaryData.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([uint8Array], { type: 'application/pdf' });
+
+                    // Create a download link and trigger the download
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = URL.createObjectURL(blob);
+                    downloadLink.download = 'signed_file.pdf';
+                    downloadLink.click();
+                    
+                })
+                .catch(error => {
+                    console.error('Error signing file:', error);
+                    alert("Failed to sign file. Please try again!");
+                });
+        };
+
+        reader.readAsDataURL(privateKey);
+    };
+
+    reader.readAsDataURL(inputFile);
+}
+
 function showLoginForm() {
     hideAllForms();
     document.getElementById("loginForm").style.display = "block";

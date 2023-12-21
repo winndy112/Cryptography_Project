@@ -14,14 +14,14 @@
         <div class="wrapper-heading">
             <h1>Signing</h1>
         </div>
-         <!-- Navigation Buttons -->
-         <div>
+        <!-- Navigation Buttons -->
+        <!-- Căn giữa của cái form -->
+        <div>
             <button onclick="showLoginForm()">Login</button>
             <button onclick="showSignupForm()">Sign Up</button>
-            <button onclick="showFileSigningForm()">File Signing</button>
         </div>
 
-        <!-- Login Form --> 
+        <!-- Login Form -->
         <div id="loginForm" style="display: none;">
             <label for="loginEmail">Email:</label>
             <input type="text" id="loginEmail" placeholder="Enter your email">
@@ -48,9 +48,20 @@
 
             <button onclick="signup(event)">Sign Up</button>
         </div>
-        
+
         <!-- File Signing Form -->
         <div id="fileSigningForm" style="display: none;">
+            <h3> Enter information of student</h3>
+            <label for="id_sv">ID:</label>
+            <input id="id_sv" type="text" placeholder="ID">
+            <label for="school">School:</label>
+            <input id="school" type="text" placeholder="School">
+            <label for="firstName">First Name:</label>
+            <input id="firstName" type="text" placeholder="First Name">
+            <label for="lastName">Last Name:</label>
+            <input id="lastName" type="text" placeholder="Last Name">
+
+            <h3> Choose file </h3>
             <label for="inputFile">Input File:</label>
             <input type="file" id="inputFile">
 

@@ -22,13 +22,13 @@ CREATE TABLE StudentInfor (
 );
 
 CREATE TABLE Qualifications (
-    degree_code VARCHAR(255),
+    degree_code INT AUTO_INCREMENT PRIMARY KEY ,
     id_sv INT,
     issue_date DATE,
     expiration_date DATE,
     institution_id INT,
     pdf_file LONGBLOB,
-    PRIMARY KEY (degree_code, id_sv),
+
     FOREIGN KEY (id_sv) REFERENCES StudentInfor (id_sv),
     FOREIGN KEY (institution_id) REFERENCES Institution (institution_id)
 );

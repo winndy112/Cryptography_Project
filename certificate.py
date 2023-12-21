@@ -27,12 +27,6 @@ Hàm tạo certificate dựa trên format
 '''
 def create_cert(info: dict, cert_file: str):
 
-    # Đọc public key từ tệp tin
-    # with open(public_file, "r") as file:
-    #     public_key = file.read().strip()
-    # public_key = public_key.replace("\n------ End Falcon Public Key ------", '')
-    # info["Public Key"] = public_key.replace('------ Begin Falcon Public Key ------\n', '')
-    
     # Tạo nội dung tệp cer
     cert_content = "\n".join([f"{key}: {value}" for key, value in info.items()])
     # Chuyển đổi nội dung cert thành base64

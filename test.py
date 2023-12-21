@@ -123,4 +123,141 @@
 #     # pdf_writer.add_metadata({PyPDF2.generic.NameObject('/Signature'): xmp_metadata.encode()})
 #     # with open('output.pdf', 'wb') as fout:
 #     #             pdf_writer.write(fout)
+# import base64
+# import pickle
+# def gen_cert(cer_file):
+#     # Đường dẫn đến tệp cer
+#     #cer_file = "certificate.pem"
+#     # Đọc nội dung tệp cer
+#     with open(cer_file, "rb") as file:
+#         cert_base64 = file.read().replace(b"---BEGIN CERTIFICATE---", b"").replace(b"---END CERTIFICATE---", b"").strip()
 
+#         # Giải mã base64 để nhận lại nội dung chứng chỉ
+#     cert_content = base64.b64decode(cert_base64).decode("utf-8")
+#     print(cert_content)
+#     # Phân tích thông tin từ nội dung chứng chỉ
+#     lines = cert_content.split("\n")
+#     username = lines[0].split(": ")[1]
+#     address = lines[1].split(": ")[1]
+#     public_key = lines[2].split(": ")[1]
+#     decoded_public_key = base64.b64decode(public_key)
+#     print(decoded_public_key)
+#     # Now you can use the decoded_public_key directly without pickling it
+#     # If you still want to pickle it, use pickle.dumps, not pickle.loads
+#     restored_key = pickle.loads(decoded_public_key)
+
+#     # In thông tin
+#     print(f"Hiệu trưởng: {username}")
+#     print(f"Trường: {address}")
+#     #print(f"Raw Public Key: {decoded_public_key} \n")
+#     print(f"Raw Public Key: {restored_key} \n")
+#     #print(f"en code Public Key: {public_key}")
+
+
+
+# import base64
+
+# # Đường dẫn đến tệp tin chứa public key
+# public_key_file = "Root_CA/public.pem"
+
+# # Đọc public key từ tệp tin
+# with open(public_key_file, "r") as file:
+#     public_key = file.read().strip()
+
+# # Tạo thông tin chứng chỉ
+# username = "Nguyễn Hoàng Tú Anh"
+# address = "UIT"
+
+# # Tạo nội dung tệp cer
+# cert_content = f"Username: {username}\nAddress: {address}\nPublic Key: {public_key}"
+# print(cert_content)
+# # Chuyển đổi nội dung cert thành base64
+# cert_base64 = base64.b64encode(cert_content.encode())
+
+# begin = b"---BEGIN CERTIFICATE---\n"
+# end = b"\n---END CERTIFICATE---\n"
+
+# # Lưu tệp cer
+# with open("certificate.cer", "wb") as cert_file:
+#     cert_file.write(begin)
+#     cert_file.write(cert_base64)
+#     cert_file.write(end)
+
+# content = {
+
+# }
+# gen_cert("certificate.cer")
+# # '''
+# # Tạo secret key và public key cho 
+# # '''
+import digital_signature as dsa
+import qr
+from certificate import create_cert, parse_cert
+from datetime import timedelta, datetime
+a = dsa.digital_signature()
+# a.load_public_key("Root_CA\\public.pem")
+# a.load_private_key("Root_CA\\private.pem")
+a.create_key()
+infor = {
+        "Version": 1, # có thể nâng cấp kiểm tra version trước đó
+        "Issuer": "Root CA Signing and Verify System",
+        "Subject ": "create_user_request.institutionName",
+        "Author": "create_user_request.authority_person",
+        "Public Key Algorithm": "Falcon",
+        "Public Key": None,
+        "Valididy" : {
+            "Not Before" : datetime.now().isoformat(),
+            "Not After" : (datetime.now() + timedelta(days=365 * 2)).isoformat()
+        },
+        "Signature Algorithm" : "sha512withFalcon",
+        "Signature" : None
+    }
+infor["Public Key"] = a.pk
+print(infor)
+# # print(a.sk)
+# # print(a.pk)
+
+# # '''
+# # test sign và add vào qr
+# # '''
+# doc = "test/test.pdf"
+# qr_code_path = './image/qrcode.png'
+# signed_doc = "test/signed_qual.pdf"
+# a.signing_pdf(doc)
+
+# certificate_info = {
+#         "Serial Number": "123",
+#         "Issuer": "Nhóm 5",
+#         "Subject ": "Toeic",
+#         "Author": "Nguyễn Văn A",
+#         "Public Key": None,
+#         "Valididy" : {
+#             "Not Before" : " Sep 23 00:00:00 2023 GMT",
+#             "Not After" : "Dec 22 23:59:59 2023 GMT"
+#         },
+#         "Signature Algorithm" : "sha256WithRSAEncryption",
+#         "Signature" : "testing"
+#     }
+
+# create_cert("public.pem", certificate_info, "./cert.pem")
+# a.add_data_to_metadata(doc, "./cert.pem", signed_doc)
+# qr.generateQr_and_add_to_pdf( a.signature, signed_doc, qr_code_path)
+# cert = a.dettach_signature_and_cert(signed_doc)
+# cert_info = parse_cert(cert)
+# a.pk = cert_info["Public Key"]
+# veri = a.verify("test\\signed_qual.pdf")
+# print(veri)
+
+
+
+
+# '''
+# test verify
+# '''
+
+# sign_doc = "test\signed_qual.pdf"
+# qr.remove_qr_code_from_pdf(sign_doc, "test\\verify_doc.pdf")
+# a.dettach_signature(sign_doc)
+
+# print(veri)
+# h còn tạo cert thử với in mã qr vào document

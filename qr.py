@@ -6,7 +6,7 @@ import fitz
 hàm tạo QR dựa bao gồm signature và certificate và gán vào pdf
 '''
 
-def generateQr_and_add_to_pdf(data, input_pdf, image_qr):
+def generateQr_and_add_to_pdf(data, pdf_bytes: bytes, image_qr):
     #tạo qr code
     qr = qrcode.QRCode(version=40)
     qr.add_data(data)
@@ -17,16 +17,16 @@ def generateQr_and_add_to_pdf(data, input_pdf, image_qr):
     resized_image.save(image_qr)
 
     # Open the PDF file
-    pdf_document = fitz.open(input_pdf)
+    pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
     # Get the first page of the PDF document
-    
     pdf_page = pdf_document[0]
     page_size = pdf_page.mediabox
     image_rectangle = fitz.Rect(20, page_size.height - 120, 120, page_size.height - 20)
     # add the image
     pdf_page.insert_image(image_rectangle, filename=image_qr)
-    # os.remove(input_pdf)
-    pdf_document.saveIncr()
+    modified_pdf_bytes = pdf_document.write()
+    
+    return modified_pdf_bytes
     
 
 '''
