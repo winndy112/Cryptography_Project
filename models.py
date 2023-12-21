@@ -6,10 +6,10 @@ class Ins(Base):
     institution_id = Column(Integer, primary_key= True, index= True)
     institution_name = Column(String)
     authority_person = Column(String)
-    email_address = Column(String)
+    email_address = Column(String, unique = True)
     hashed_password = Column(String)
     certificate_file = Column(LargeBinary)
-    
+
 class Students(Base):
     __tablename__= "StudentInfor"
     id_sv = Column(Integer, primary_key=True, index=True)

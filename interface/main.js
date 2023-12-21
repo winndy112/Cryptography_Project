@@ -111,14 +111,16 @@ function getQualifications() {
 
 function login(event) {
     event.preventDefault();
-
-    var formData = new FormData();
-    formData.append("email_address", document.getElementById("loginEmail").value);
-    formData.append("password", document.getElementById("loginPassword").value);
-
+    var email = document.getElementById("loginEmail").value;
+    var pass = document.getElementById("loginPassword").value;
+    var requestData = {
+        email_address : email,
+        password : pass
+    };
+    
     fetch('http://127.0.0.1:8001/token', {
         method: 'POST',
-        body: formData
+        body: JSON.stringify(requestData),
     })
         .then(response => {
             if (!response.ok) {
@@ -128,19 +130,20 @@ function login(event) {
         })
         .then(data => {
             console.log('API Response:', data);
-            // Boostrap rasise popups
-            
+            alert("Successfull log in!")
+            // Bootstrap raise popups
             setTimeout(function () {
-                showFileSigningForm; 
+                showFileSigningForm();  // Fix: Correct the function call
             }, 2000);
 
         })
         .catch(error => {
-            // Boostrap rasise popups
+            // Bootstrap raise popups
             console.error('Error:', error.message);
-
+            alert('Failed to log in. Please try again.');
         });
 }
+
 
 function signup(event) {
     event.preventDefault();
@@ -162,7 +165,11 @@ function signup(event) {
         },
         body: JSON.stringify(Data_request)
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.error}`);
+            }d
+        })
         .then(data => {
             console.log('API Response:', data);
             // Boostrap rasise popups
@@ -189,7 +196,7 @@ function signup(event) {
         .catch(error => {
             // Boostrap rasise popups
             console.error('Error:', error);
-            alert(error.error);
+            alert("Fail to sign up. Please try again!");
         });
 }
 function showLoginForm() {

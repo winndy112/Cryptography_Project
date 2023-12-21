@@ -1,5 +1,5 @@
 # import APIRouter
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 from passlib.context import CryptContext # for hash password
 from sqlalchemy.orm import Session
@@ -25,12 +25,16 @@ ALGORITHM = "HS256" # algorithm
 
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto") # instace to hashing password
+
 class CreateUserRequest(BaseModel):
     institutionName: str
     authority: str
     signupEmail: str
     password: str
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 def get_db():
     db = SessionLocal()
@@ -70,6 +74,8 @@ def create_access_token(email_address: str, institution_id: int, expires_delta: 
     expires = datetime.utcnow() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
 '''
 hàm check format của email
 '''
@@ -83,6 +89,9 @@ async def create_user(db: db_dependency,
                       create_user_request: CreateUserRequest):
     if not is_valid_email(create_user_request.signupEmail):
         return JSONResponse(content={"error": "Invalid email format"}, status_code=400)
+    existing_user = db.query(Ins).filter(Ins.email_address == create_user_request.signupEmail).first()
+    if existing_user:
+        return JSONResponse(content={"error": "Email already exists"}, status_code=400)
     # cặp key của root CA
     root_ca = dsa.digital_signature()
     root_ca.load_private_key("Root_CA/private.pem")
@@ -105,14 +114,18 @@ async def create_user(db: db_dependency,
         },
         "Signature Algorithm" : "sha512withFalcon"
     }
+    # lấy public key của user thêm vào certificate
     serialized_key = pickle.dumps(pair.pk)
     encoded_key = base64.b64encode(serialized_key).decode('utf-8')
     infor["Public Key"] = encoded_key
     message = json.dumps(infor, sort_keys=True)
+
+    # tính signature các thông tin của user bằng private key của root CA
     sig = root_ca.sk.sign(message.encode())
     hashed_message = hashlib.sha512(sig).digest()
     hex_signature = "".join(f"{byte:02x}:" for byte in hashed_message)
     infor["Signature"] = hex_signature
+    # tạo một file cert tạm
     certificate.create_cert(infor, "cert/temp.pem")
     with open(r"cert/temp.pem", "rb") as f:
         cert = f.read()
@@ -140,14 +153,14 @@ async def create_user(db: db_dependency,
     return JSONResponse(content=response_data)
 
 @router.post("/token")
+async def login_for_access_token(request: Request, db: db_dependency):
+    form_data = await request.json()
 
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-                                 db: db_dependency):
-    user = authenticate_user(form_data.email_address, form_data.password, db)
-    
+    user = authenticate_user(form_data["email_address"], form_data["password"], db)
+
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     token = create_access_token(user.email_address, user.institution_id, timedelta(minutes=20))
     return {'access_token': token, "token_type": "bearer"}
-
+    
