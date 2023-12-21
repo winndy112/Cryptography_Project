@@ -1,0 +1,79 @@
+/* Reset some default styles for better consistency across browsers */
+body, h1, h2, h3, p, button, input {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+}
+
+.wrapper {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+.wrapper-heading {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Navigation Buttons */
+div button {
+    margin: 5px;
+    padding: 10px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+/* Form Styling */
+div form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.input_field {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Responsive Design */
+@media only screen and (max-width: 600px) {
+    .wrapper {
+        padding: 10px;
+    }
+
+    div form {
+        max-width: 100%;
+    }
+}
