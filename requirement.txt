@@ -38,3 +38,4 @@ websockets==10.4
 fitz
 PyPDF2
 qr
+pymysql
