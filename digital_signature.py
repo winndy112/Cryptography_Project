@@ -5,6 +5,9 @@ import base64
 import pickle
 import fitz
 import PyPDF2 
+import io
+import os
+from fastapi import UploadFile
 # GLOBAL VARIABLES
 KEY_LENGTH = 512
 
@@ -42,8 +45,11 @@ class digital_signature():
     '''
     Hàm thêm chữ kí vào trường metadata của văn bằng pdf
     '''
-    def add_signature_to_metadata(self, pdf_file, output_file):
+
+    def add_data_to_metadata(self, pdf_file: str, cert_file: str, output_file: str):
         try:
+            with open(cert_file, "r") as file:
+                data = file.read()
             # Open the PDF file
             reader =PyPDF2.PdfReader(pdf_file)
             writer = PyPDF2.PdfWriter()
@@ -63,9 +69,11 @@ class digital_signature():
                 '/CreationDate': creation_date,
                 '/ModDate': modification_date,
                 '/Producer': producer,
-                '/Signature': None
+                '/Signature': None,
+                '/Certificate': None
             }
             extracted_metadata['/Signature'] = self.signature.decode()
+            extracted_metadata['/Certificate'] = data
             writer.append_pages_from_reader(reader)
             for key in extracted_metadata:
                 writer.add_metadata({PyPDF2.generic.create_string_object(key): PyPDF2.generic.create_string_object(str(extracted_metadata[key]))})
@@ -73,29 +81,41 @@ class digital_signature():
                 writer.write(fout)
         except Exception as e:
             print(f"Error adding signature to PDF metadata: {e}")
-    def dettach_signature(self, input_pdf):
-        with open(input_pdf, 'rb') as file:
+
+
+    def dettach_signature_and_cert(self, input_pdf: UploadFile):
+        contents = input_pdf.file.read()
+        with io.BytesIO(contents) as file:
             pdf_reader = PyPDF2.PdfReader(file)
             meta = pdf_reader.metadata
+        
         if "/Signature" in meta:
             self.signature = (str(meta['/Signature']).encode())
+        return meta["/Certificate"]
         
 
     '''
     hàm xác thực chữ kí số dựa trên 3 input: chữ kí số encoded base64, file văn bằng cần xác thực và public key
     '''
-    def verify(self, input_file: str) -> bool:
-        document = fitz.open(input_file)
+    def verify(self, input_file: UploadFile) -> bool:
+        contents = input_file.file.read()
+        if not contents:
+            return False
+        document = fitz.open(stream=contents)
         page = document[0]
         message = page.get_text().encode()
         sign = base64.b64decode(self.signature)
-        return (self.pk.verify(message, sign))
+
+        # Trả về kết quả xác minh
+        result = self.pk.verify(message, sign)
+        return result
+    
     '''
     Hàm lưu key vào file pem
     '''
     def SaveSecret2Pem(self, filepath):
-        falcon_public_key_begin = "-- Begin Falcon Private Key --\n"
-        falcon_public_key_end = "\n-- End Falcon Private Key --\n"
+        falcon_public_key_begin = "------ Begin Falcon Private Key ------\n"
+        falcon_public_key_end = "\n------ End Falcon Private Key ------\n"
         serialized_key = pickle.dumps(self.sk)
         encoded_key = base64.b64encode(serialized_key).decode('utf-8')
         with open(filepath, 'w') as file:
@@ -104,8 +124,8 @@ class digital_signature():
             file.write(falcon_public_key_end)
 
     def SavePublic2Pem(self, filepath):
-        falcon_public_key_begin = "-- Begin Falcon Public Key --\n"
-        falcon_public_key_end = "\n-- End Falcon Public Key --\n"
+        falcon_public_key_begin = "------ Begin Falcon Public Key ------\n"
+        falcon_public_key_end = "\n------ End Falcon Public Key ------\n"
         serialized_key = pickle.dumps(self.pk)
         encoded_key = base64.b64encode(serialized_key).decode('utf-8')
         with open(filepath, 'w') as file:
@@ -120,10 +140,10 @@ class digital_signature():
             with open(file_path, 'r') as file:
                 encoded_secret_key = file.read()
 
-            if encoded_secret_key.startswith("-- Begin Falcon Private Key --"):
-                encoded_secret_key = encoded_secret_key.split("-- Begin Falcon Private Key --")[1]
-            if encoded_secret_key.endswith("\n-- End Falcon Private Key --\n"):
-                encoded_secret_key = encoded_secret_key.rsplit("\n-- End Falcon Private Key --\n", 1)[0]
+            if encoded_secret_key.startswith("------ Begin Falcon Private Key ------\n"):
+                encoded_secret_key = encoded_secret_key.split("------ Begin Falcon Private Key ------\n")[1]
+            if encoded_secret_key.endswith("\n------ End Falcon Private Key ------\n"):
+                encoded_secret_key = encoded_secret_key.rsplit("\n------ End Falcon Private Key ------\n", 1)[0]
 
             decoded_secret_key = base64.b64decode(encoded_secret_key)
             secret_key = pickle.loads(decoded_secret_key)
@@ -136,21 +156,20 @@ class digital_signature():
             with open(file_path, 'r') as file:
                 encoded_public_key = file.read()
 
-            if encoded_public_key.startswith("-- Begin Falcon Public Key --"):
-                encoded_public_key = encoded_public_key.split("-- Begin Falcon Public Key --")[1]
-            if encoded_public_key.endswith("\n-- End Falcon Private Key --\n"):
-                encoded_public_key = encoded_public_key.rsplit("\n-- End Falcon Private Key --\n", 1)[0]
+            if encoded_public_key.startswith("------ Begin Falcon Public Key ------\n"):
+                encoded_public_key = encoded_public_key.split("------ Begin Falcon Public Key ------\n")[1]
+            if encoded_public_key.endswith("\n------ End Falcon Public Key ------\n"):
+                encoded_public_key = encoded_public_key.rsplit("\n------ End Falcon Public Key ------\n", 1)[0]
 
             decoded_public_key = base64.b64decode(encoded_public_key)
             public_key = pickle.loads(decoded_public_key)
             self.pk = public_key
         except Exception as e:
             return f"Error loading public key: {e}"
-
-
-# '''
-# Example Usage:
-# '''
+        
+'''
+Example Usage:
+'''
 # a = digital_signature()
 # a.create_key()
 # a.SaveSecret2Pem("private.pem")
