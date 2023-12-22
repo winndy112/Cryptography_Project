@@ -11,17 +11,17 @@ from fastapi.responses import HTMLResponse
 app = FastAPI()
 
 
-# Add CORS middleware
+# Thêm phần trung gian CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500"],  # Update with your frontend origin
+    allow_origins=["http://127.0.0.1:5500"],  # Cập nhật địa chỉ frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-models.Base.metadata.create_all(bind=engine) # create all tablefrom fastapi import FastAPI
+models.Base.metadata.create_all(bind=engine) # Tạo một bảng ghi from fastapi import FastAPI
 
 app.include_router(get.router)
 app.include_router(auth.router)
