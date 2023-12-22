@@ -4,7 +4,7 @@ import pickle
 import PyPDF2
 from fastapi import FastAPI
 import models
-from routers import auth, get, verify
+from routers import auth, get, verify, signFile
 from database import engine
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -26,7 +26,7 @@ models.Base.metadata.create_all(bind=engine) # create all tablefrom fastapi impo
 app.include_router(get.router)
 app.include_router(auth.router)
 app.include_router(verify.router)
-
+app.include_router(signFile.router)
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     return "<html><body><h1>FastAPI is running!</h1></body></html>"
