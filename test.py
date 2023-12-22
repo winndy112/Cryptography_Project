@@ -190,30 +190,24 @@
 # # '''
 # # Tạo secret key và public key cho 
 # # '''
-import digital_signature as dsa
-import qr
-from certificate import create_cert, parse_cert
-from datetime import timedelta, datetime
-a = dsa.digital_signature()
-# a.load_public_key("Root_CA\\public.pem")
-# a.load_private_key("Root_CA\\private.pem")
-a.create_key()
-infor = {
-        "Version": 1, # có thể nâng cấp kiểm tra version trước đó
-        "Issuer": "Root CA Signing and Verify System",
-        "Subject ": "create_user_request.institutionName",
-        "Author": "create_user_request.authority_person",
-        "Public Key Algorithm": "Falcon",
-        "Public Key": None,
-        "Valididy" : {
-            "Not Before" : datetime.now().isoformat(),
-            "Not After" : (datetime.now() + timedelta(days=365 * 2)).isoformat()
-        },
-        "Signature Algorithm" : "sha512withFalcon",
-        "Signature" : None
-    }
-infor["Public Key"] = a.pk
-print(infor)
+
+# a.create_key()
+# infor = {
+#         "Version": 1, # có thể nâng cấp kiểm tra version trước đó
+#         "Issuer": "Root CA Signing and Verify System",
+#         "Subject ": "create_user_request.institutionName",
+#         "Author": "create_user_request.authority_person",
+#         "Public Key Algorithm": "Falcon",
+#         "Public Key": None,
+#         "Valididy" : {
+#             "Not Before" : datetime.now().isoformat(),
+#             "Not After" : (datetime.now() + timedelta(days=365 * 2)).isoformat()
+#         },
+#         "Signature Algorithm" : "sha512withFalcon",
+#         "Signature" : None
+#     }
+# infor["Public Key"] = a.pk
+# print(infor)
 # # print(a.sk)
 # # print(a.pk)
 
@@ -254,10 +248,18 @@ print(infor)
 # '''
 # test verify
 # '''
-
+import digital_signature as dsa
+import qr
+from certificate import create_cert, parse_cert
+from datetime import timedelta, datetime
+a = dsa.digital_signature()
+# a.load_public_key("Root_CA\\public.pem")
+a.load_CA_private_key(r"C:\Users\admin\Downloads\qa_company.pem")
 # sign_doc = "test\signed_qual.pdf"
 # qr.remove_qr_code_from_pdf(sign_doc, "test\\verify_doc.pdf")
-# a.dettach_signature(sign_doc)
+with open(r"C:\Users\admin\Downloads\signed_file (1).pdf", "rb") as file:
+    data = file.read()
+print(a.dettach_signature_and_cert(data))
 
 # print(veri)
 # h còn tạo cert thử với in mã qr vào document

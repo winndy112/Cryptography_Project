@@ -5,8 +5,16 @@ body, h1, h2, h3, p, button, input {
     box-sizing: border-box;
 }
 
+/* body {
+    font-family: 'Arial', sans-serif;
+} */
 body {
     font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
 }
 
 .wrapper {
@@ -66,6 +74,9 @@ input {
     border-radius: 5px;
     cursor: pointer;
 }
+
+
+
 
 /* Responsive Design */
 @media only screen and (max-width: 600px) {

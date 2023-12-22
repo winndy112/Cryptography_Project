@@ -10,16 +10,11 @@ import logging
 from jose import jwt, JWTError
 from datetime import timedelta, datetime, date
 from fastapi.responses import JSONResponse, FileResponse
-import json
-import hashlib
-import pickle
 import base64
 import os 
-import re
 import qr
 from models import Students, Ins, Quals
 import digital_signature as dsa
-import certificate
 
 router = APIRouter()
 
@@ -108,7 +103,8 @@ async def sign_file(request: Request, db: db_dependency, form_data: SignFileRequ
         # kí file
         input_bytes = base64.b64decode(input_file)
         pair.signing_pdf(input_bytes)
-        # lấy file cert của nhà phát hành từ database
+        # lấy file cert của nhà phát hành từ database nếu session log in vẫn còn
+        # nếu session hết hạn cần user đăng nhập lại
         current_user = get_current_user(request.headers["Authorization"].split()[1], db)
 
         certificate_file = current_user.certificate_file # base64 encode và đọc vào bytes
@@ -118,7 +114,8 @@ async def sign_file(request: Request, db: db_dependency, form_data: SignFileRequ
         with open(pdf_tmp, "rb") as file:
             byte = file.read()
         # thêm qr code vào pdf
-        pdf_output:bytes = qr.generateQr_and_add_to_pdf(pair.signature, byte, image_tmp)
+        data = student.id_sv + ' | ' + student.school + ' | ' + student.first_name + ' | ' + student.last_name  
+        pdf_output:bytes = qr.generateQr_and_add_to_pdf(data + ' | ' + pair.signature, byte, image_tmp)
         # lưu vào database
         qualification = Quals(
             id_sv=student_id,

@@ -18,12 +18,12 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]    
 router = APIRouter()
 
-class GetQualsRequest(BaseModel):
-    student_id: int
-    school: str
-    first_name: str
-    last_name: str
-    qual_code: int
+# class GetQualsRequest(BaseModel):
+#     student_id: int
+#     school: str
+#     first_name: str
+#     last_name: str
+#     qual_code: int
 
 @router.get("/",  status_code=status.HTTP_200_OK)
 

@@ -6,7 +6,8 @@ import pickle
 import fitz
 import PyPDF2 
 import io
-import os
+import os, datetime
+from datetime import  timedelta
 from fastapi import UploadFile
 # GLOBAL VARIABLES
 KEY_LENGTH = 512
@@ -32,11 +33,42 @@ class digital_signature():
     Kí chữ kí số cho văn bằng
     Trả về chữ kí số được mã hóa Base64
     '''
+    
     def signing_pdf(self, input_file: bytes):
-        sig = self.sk.sign(input_file)
+        tmp = "./test/_tmp.pdf" 
+        with open(tmp, "wb") as file:
+            file.write(input_file)
+        doc = fitz.open(tmp)
+        text = ""
+        for page_num in range(doc.page_count):
+            page = doc[page_num]
+            text += page.get_text()
+        sig = self.sk.sign(text.encode("utf-8"))
         sign_b64 = base64.b64encode(sig).decode()
         self.signature = sign_b64
+        doc.close()
+        os.remove(tmp)
 
+    '''
+    hàm xác thực chữ kí số dựa trên 3 input: chữ kí số encoded base64, file văn bằng cần xác thực và public key
+    '''
+    def verify(self, input_file: bytes) -> bool:
+        if not input_file:
+            return False  
+        tmp = "./test/_tmp.pdf" 
+        with open(tmp, "wb") as file:
+            file.write(input_file)
+        doc = fitz.open(tmp)
+        text = ""
+        for page_num in range(doc.page_count):
+            page = doc[page_num]
+            text += page.get_text()
+        sign = base64.b64decode(self.signature)
+        # Trả về kết quả xác minh
+        result = self.pk.verify(text.encode("utf-8"), sign)
+        doc.close()
+        os.remove(tmp)
+        return result
     '''
     Hàm thêm chữ kí và văn bằng vào trường metadata của văn bằng pdf
     '''
@@ -47,27 +79,12 @@ class digital_signature():
             pdf_stream = io.BytesIO(pdf_bytes)
             reader =PyPDF2.PdfReader(pdf_stream)
             metadata= reader.metadata
-            title = metadata.title
-            author = metadata.author
-            subject = metadata.subject
-            creator = metadata.creator
-            producer = metadata.producer
-            creation_date = metadata.creation_date.strftime("D:%Y%m%d%H%M%S%z%H'%M'")
-            modification_date = metadata.modification_date.strftime("D:%Y%m%d%H%M%S%z%H'%M'")
-            extracted_metadata = {
-                '/Title': title,
-                '/Author': author,
-                '/Subject': subject,
-                '/Creator': creator,
-                '/CreationDate': creation_date,
-                '/ModDate': modification_date,
-                '/Producer': producer,
-                '/Signature': None,
-                '/Certificate': None
-            }
+            extracted_metadata = {}
             extracted_metadata['/Signature'] = self.signature
             extracted_metadata['/Certificate'] = cert_file.decode()
             writer.append_pages_from_reader(reader)
+            for key in metadata:
+                writer.add_metadata({PyPDF2.generic.create_string_object(key): PyPDF2.generic.create_string_object(str(metadata[key]))})
             for key in extracted_metadata:
                 writer.add_metadata({PyPDF2.generic.create_string_object(key): PyPDF2.generic.create_string_object(str(extracted_metadata[key]))})
             with open(output_file, 'wb') as fout:
@@ -75,33 +92,30 @@ class digital_signature():
         except Exception as e:
             print(f"Error adding signature to PDF metadata: {e}")
 
-    def dettach_signature_and_cert(self, input_pdf: str):
-        with open(input_pdf, "rb") as file:
-        # contents = input_pdf.file.read()
-        # with io.BytesIO(contents) as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            meta = pdf_reader.metadata
-        print(meta)
+    def dettach_signature_and_cert(self, input_pdf: bytes):
+        pdf_stream = io.BytesIO(input_pdf)
+        pdf_reader =PyPDF2.PdfReader(pdf_stream)
+        meta = pdf_reader.metadata
         if "/Signature" in meta:
-            self.signature = (str(meta['/Signature']).encode())
+            self.signature = (str(meta['/Signature']).encode()) 
         return meta["/Certificate"]
         
-
-    '''
-    hàm xác thực chữ kí số dựa trên 3 input: chữ kí số encoded base64, file văn bằng cần xác thực và public key
-    '''
-    def verify(self, input_file: UploadFile) -> bool:
-        contents = input_file.file.read()
-        if not contents:
-            return False
-        document = fitz.open(stream=contents)
-        page = document[0]
-        message = page.get_text().encode()
-        sign = base64.b64decode(self.signature)
-
-        # Trả về kết quả xác minh
-        result = self.pk.verify(message, sign)
-        return result
+    def remove_data_from_metadata(self, input: bytes, output_file: str):
+        try:
+            input_file = io.BytesIO(input)
+            reader = PyPDF2.PdfReader(input_file)
+            writer = PyPDF2.PdfWriter()
+            metadata= reader.metadata
+            writer.append_pages_from_reader(reader)
+            for key in metadata:
+                if key == "/Signature" or key == "/Certificate":
+                    continue
+                writer.add_metadata({PyPDF2.generic.create_string_object(key): PyPDF2.generic.create_string_object(str(metadata[key]))})
+            with open(output_file, 'wb') as fout:
+                writer.write(fout)
+        except Exception as e:
+            print(f"Error removing metadata: {e}")
+    
     
     '''
     Hàm lưu key vào file pem

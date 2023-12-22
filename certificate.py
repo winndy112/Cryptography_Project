@@ -3,7 +3,7 @@ import sys
 sys.path.append('/falcon')
 from falcon import falcon
 import base64
-import pickle
+import pickle, json
 
 '''
 Format của certificate
@@ -11,11 +11,11 @@ Format của certificate
 certificate_format = {
         "Version": None,
         "Issuer": None,
-        "Subject ": None,
+        "Subject": None,
         "Author": None,
         "Public Key Algorithm": None,
         "Public Key": None,
-        "Valididy" : {
+        "Validity" : {
             "Not Before" : None,
             "Not After" : None
         },
@@ -44,8 +44,9 @@ def create_cert(info: dict, cert_file: str):
 '''
 Hàm phân tích cert dựa trên format
 '''
-def parse_cert(cert_file):
-    cert_base64 = cert_file.replace("---BEGIN CERTIFICATE---", "").replace("---END CERTIFICATE---", "").strip()
+def parse_cert(cert_file: str):
+
+    cert_base64 = cert_file.strip().replace("---BEGIN CERTIFICATE---", "").replace("---END CERTIFICATE---", "")
 
     # Giải mã base64 để nhận lại nội dung chứng chỉ
     cert_content = base64.b64decode(cert_base64).decode("utf-8")
@@ -53,14 +54,17 @@ def parse_cert(cert_file):
     # Phân tích thông tin từ nội dung chứng chỉ thành dictionary
     cert_info = certificate_format
     lines = cert_content.split("\n")
+    
     for line in lines:
-        #print(line)
         key, value = line.split(": ", 1)
-        if key == "Validity":
-            validity_dict = eval(value)
-            cert_info["Valididy"]["Not Before"] = validity_dict.get("Not Before")
-            certificate_format["Valididy"]["Not After"] = validity_dict.get("Not After")
         cert_info[key] = value
+        if key == "Validity":
+            value = eval(value)
+            val = {}
+            val["Not Before"] = value["Not Before"]
+            val["Not After"] =  value["Not After"]
+            cert_info["Validity"] = val
+            
     decoded_public_key = base64.b64decode(str(cert_info['Public Key']).encode())
     restored_key = pickle.loads(decoded_public_key)
     cert_info["Public Key"] = restored_key

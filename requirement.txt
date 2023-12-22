@@ -39,3 +39,4 @@ fitz
 PyPDF2
 qr
 pymysql
+pickle

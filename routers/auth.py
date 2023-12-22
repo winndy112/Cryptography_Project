@@ -101,7 +101,10 @@ async def create_user(db: db_dependency,
     if existing_user:
         raise HTTPException(detail="Email already exists", status_code=400)
     
-    # cặp key của root CA
+    '''
+    cần dùng tpm
+    '''
+    # cặp key của root CA 
     root_ca = dsa.digital_signature()
     root_ca.load_CA_private_key("Root_CA/private.pem")
     
@@ -110,13 +113,13 @@ async def create_user(db: db_dependency,
     pair.create_key()
     # tạo certificate file
     infor = {
-        "Version": 1, # có thể nâng cấp kiểm tra version trước đó
+        "Version": "1", # có thể nâng cấp kiểm tra version trước đó
         "Issuer": "Root CA Signing and Verify System",
-        "Subject ": create_user_request.institutionName,
+        "Subject": create_user_request.institutionName,
         "Author": create_user_request.authority,
         "Public Key Algorithm": "Falcon",
         "Public Key": None,
-        "Valididy" : {
+        "Validity" : {
             "Not Before" : datetime.now().isoformat(),
             "Not After" : (datetime.now() + timedelta(days=365 * 2)).isoformat()
         },
@@ -127,11 +130,13 @@ async def create_user(db: db_dependency,
     serialized_key = pickle.dumps(pair.pk)
     encoded_key = base64.b64encode(serialized_key).decode('utf-8')
     infor["Public Key"] = encoded_key
-    message = json.dumps(infor, sort_keys=True)
+    message = json.dumps(infor, default=str)
+    with open("test.txt", "w") as file:
+        file.write(message)
+    hashed_message = hashlib.sha512(message.encode()).digest()
     # tính signature các thông tin của user bằng private key của root CA
-    sig = root_ca.sk.sign(message.encode())
-    hashed_message = hashlib.sha512(sig).digest()
-    hex_signature = "".join(f"{byte:02x}:" for byte in hashed_message)
+    sig = root_ca.sk.sign(hashed_message)
+    hex_signature = "".join(f"{byte:02x}:" for byte in sig)
     infor["Signature"] = hex_signature
     # tạo một file cert tạm
     certificate.create_cert(infor, "cert/temp.pem")
@@ -172,3 +177,4 @@ async def login_for_access_token(request: Request, db: db_dependency):
 
     token = create_access_token(user.email_address, user.institution_id, timedelta(minutes=20))
     return {'access_token': token, "token_type": "bearer"}
+

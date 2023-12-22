@@ -4,14 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="style.css">
-    <title>Verify</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .wrapper {
+            text-align: center;
+        }
+    </style>
+    <title>Verify page</title>
 </head>
 <body>
-
-    <h1>Verify Page</h1>
-
     <div>
-        <label for="fileInput">Upload a file:</label>
+        <label for="fileInput" >Upload a PDF file:</label> 
         <input type="file" id="fileInput">
         <button onclick="verify(event)">Verify</button>
     </div>
