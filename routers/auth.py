@@ -28,27 +28,38 @@ ALGORITHM = "HS256" # algorithm
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto") # instace to hashing password
 
-logging.basicConfig(level=logging.DEBUG) # ussing for debug
+logging.basicConfig(level=logging.DEBUG) # log dùng để debug
 
+'''
+Form data request khi user muốn sign up
+'''
 class CreateUserRequest(BaseModel):
     institutionName: str
     authority: str
     signupEmail: str
     password: str
 
+'''
+Form data request khi user muốn log in
+'''
 class LoginRequest(BaseModel):
     email: str
     password: str
 
+'''
+Form data request khi user muốn kí văn bằng
+'''
 class SignFileRequest(BaseModel):
-    id_sv : int
     school: str
     firstName: str
     lastName: str
     inputFile: str #base64 encode
     privateKey: str #base64 encode
 
-def get_db(request: Request):
+'''
+Lấy session kết nối database
+'''
+def get_db():
     db = SessionLocal()
     try:
         yield db
@@ -56,26 +67,26 @@ def get_db(request: Request):
         db.close()
 
 
-async def add_database(db, request):
-    try:
-        db.add(request)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise e
+# async def add_database(db, request):
+#     try:
+#         db.add(request)
+#         db.commit()
+#     except Exception as e:
+#         db.rollback()
+#         raise e
     
 # param means: db will be define in a "get_db" function        
 db_dependency = Annotated[Session, Depends(get_db)] 
 
+
 def authenticate_user(email_address: str, password: str, db):
-    # find the user infomration if exist
     user = db.query(Ins).filter(Ins.email_address == email_address).first()
+    
     if not user:
         return False
     # the password not match
     if not bcrypt_context.verify(password, user.hashed_password): # compare beetween input and database
         return False
-    
     return user
 
 def create_access_token(email_address: str, institution_id: int, expires_delta: timedelta):
@@ -91,7 +102,6 @@ def create_access_token(email_address: str, institution_id: int, expires_delta: 
 '''
 hàm check format của email
 '''
-
 def is_valid_email(email):
     # Using a simple regular expression for basic email format validation
     email_pattern = re.compile(r'^[\w\.-]+@[a-zA-Z\d\.-]+\.[a-zA-Z]{2,}$')
@@ -100,20 +110,22 @@ def is_valid_email(email):
 @router.post("/auth")
 async def create_user(db: db_dependency,
                       create_user_request: CreateUserRequest):
+    
     if not is_valid_email(create_user_request.signupEmail):
-        return JSONResponse(content={"error": "Invalid email format"}, status_code=400)
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    # kiểm tra email đã được đăng kí chưa
     existing_user = db.query(Ins).filter(Ins.email_address == create_user_request.signupEmail).first()
     if existing_user:
-        return JSONResponse(content={"error": "Email already exists"}, status_code=400)
+        raise HTTPException(detail="Email already exists", status_code=400)
+    
     # cặp key của root CA
     root_ca = dsa.digital_signature()
-    root_ca.load_private_key("Root_CA/private.pem")
+    root_ca.load_CA_private_key("Root_CA/private.pem")
     
     # tạo cặp key cho người dùng
     pair = dsa.digital_signature()
     pair.create_key()
     # tạo certificate file
-
     infor = {
         "Version": 1, # có thể nâng cấp kiểm tra version trước đó
         "Issuer": "Root CA Signing and Verify System",
@@ -127,12 +139,12 @@ async def create_user(db: db_dependency,
         },
         "Signature Algorithm" : "sha512withFalcon"
     }
+    
     # lấy public key của user thêm vào certificate
     serialized_key = pickle.dumps(pair.pk)
     encoded_key = base64.b64encode(serialized_key).decode('utf-8')
     infor["Public Key"] = encoded_key
     message = json.dumps(infor, sort_keys=True)
-
     # tính signature các thông tin của user bằng private key của root CA
     sig = root_ca.sk.sign(message.encode())
     hashed_message = hashlib.sha512(sig).digest()
@@ -142,6 +154,7 @@ async def create_user(db: db_dependency,
     certificate.create_cert(infor, "cert/temp.pem")
     with open(r"cert/temp.pem", "rb") as f:
         cert = f.read()
+    
     # thêm ins và certificate của nó vào database
     create_user_model = Ins( institution_name =create_user_request.institutionName,
                                 authority_person = create_user_request.authority,
@@ -206,19 +219,23 @@ def is_user_logged_in(request: Request, current_user: Ins = Depends(get_current_
 @router.post("/sign_file")
 async def sign_file(request: Request, db: db_dependency, form_data: SignFileRequest):    # Ensure the files are saved to the server
     try:
-        if not is_user_logged_in(request):
+        pdf_tmp =  "test/tmp.pdf"
+        image_tmp = "image/qrcode.png"
+        if not is_user_logged_in(request): 
             raise HTTPException(status_code=401, detail="User not logged in")
-        id_sv = form_data.id_sv
-        school = form_data.school
-        first_name = form_data.firstName
-        last_name = form_data.lastName
+            
+        _school = form_data.school
+        _first_name = form_data.firstName
+        _last_name = form_data.lastName
         input_file = form_data.inputFile #base64
         private_key = form_data.privateKey # base64
         # check xem student đã có trong database chưa
-        student = db.query(Students).filter(Students.id_sv == id_sv).first()
+        student = db.query(Students).filter(Students.school == _school,
+                                            Students.first_name == _first_name, Students.last_name == _last_name ).first()
+        
         if not student:
             # If the student is not in the database, add them
-            new_student = Students(id_sv=id_sv,school=school, first_name=first_name, last_name=last_name, )
+            new_student = Students(school=_school, first_name=_first_name, last_name= _last_name )
             db.add(new_student)
             db.commit()
             db.refresh(new_student)
@@ -235,16 +252,15 @@ async def sign_file(request: Request, db: db_dependency, form_data: SignFileRequ
         pair.signing_pdf(input_bytes)
         # lấy file cert của nhà phát hành từ database
         current_user = get_current_user(request.headers["Authorization"].split()[1], db)
+
         certificate_file = current_user.certificate_file # base64 encode và đọc vào bytes
         
-        '''
-        bug
-        '''
         # thêm certificate và signature vào file metadata của pdf
-        pair.add_data_to_metadata(input_bytes, certificate_file, "test/tmp.pdf")
-        
+        pair.add_data_to_metadata(input_bytes, certificate_file, pdf_tmp)
+        with open(pdf_tmp, "rb") as file:
+            byte = file.read()
         # thêm qr code vào pdf
-        pdf_output:bytes = qr.generateQr_and_add_to_pdf(pair.signature, input_bytes, "image/qrcode.pngqrcode.png")
+        pdf_output:bytes = qr.generateQr_and_add_to_pdf(pair.signature, byte, image_tmp)
         # lưu vào database
         qualification = Quals(
             id_sv=student_id,
@@ -260,12 +276,13 @@ async def sign_file(request: Request, db: db_dependency, form_data: SignFileRequ
         pdf_output_base64 = base64.b64encode(pdf_output).decode('utf-8')
         response_json = {
             "pdf_content": pdf_output_base64,
-            "Nhà phát hành": current_user.institution_name,
-            "Người kí" : current_user.authority_person
+            "nhaPhatHanh": current_user.institution_name,
+            "nguoiKi" : current_user.authority_person,
+            "id_sv" : student_id
         }
         
-        os.remove("image/qrcode.png")
-        os.remove("test/tmp.pdf")
+        os.remove(pdf_tmp)
+        os.remove(image_tmp)
         # Return the response
         return JSONResponse(content=response_json)
     except Exception as e:

@@ -114,7 +114,11 @@ function login(event) {
     event.preventDefault();
     var email = document.getElementById("loginEmail").value;
     var pass = document.getElementById("loginPassword").value;
-
+    
+    if (!email || !pass) {
+        alert("Please fill in all the fields.");
+        return;
+    }
     var requestData = {
         email_address: email,
         password: pass
@@ -125,22 +129,23 @@ function login(event) {
         body: JSON.stringify(requestData),
     })
         .then(response => {
-            if (!response.ok) {
+            if (!response.ok) {             
                 throw new Error('Invalid credentials');
             }
             return response.json();
         })
         .then(data => {
             console.log('API Response:', data);
+            // lưu token để kiểm tra khi kí
             localStorage.setItem('accessToken', data.access_token);
             alert("Successfull log in!")
-            // Bootstrap raise popups
+            // đăng nhập thành công thì cho phép kí
             showFileSigningForm()
         })
         .catch(error => {
-            // Bootstrap raise popups
-            console.error('Error:', error.message);
-            alert('Failed to log in. Please try again.');
+            // console.error('Error:', error.message);
+            console.error('Error:', error);
+            alert("Fail to log in: " + error.message); 
         });
 }
 
@@ -151,12 +156,17 @@ function signup(event) {
     var authority = document.getElementById("authority").value;
     var signupEmail = document.getElementById("signupEmail").value;
     var password = document.getElementById("signupPassword").value;
+    if (!institutionName || !authority || !signupEmail || !password) {
+        alert("Please fill in all the fields.");
+        return;
+    }
     var Data_request = {
         institutionName: institutionName,
         authority: authority,
         signupEmail: signupEmail,
         password: password
     };
+
     fetch('http://127.0.0.1:8001/auth', {
         method: 'POST',
         headers: {
@@ -166,14 +176,13 @@ function signup(event) {
     })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.error}`);
-            } d
+                throw new Error(`ERROR! Invalid email.`);
+            }
+            return response.json();
         })
         .then(data => {
             console.log('API Response:', data);
-            // Boostrap rasise popups
 
-            // If the response is successful, alert and redirect
             var contentBinary = atob(data.Private_key);
             var pemBlob = new Blob([new Uint8Array([...contentBinary].map(char => char.charCodeAt(0)))], { type: 'application/x-pem-file' });
 
@@ -193,9 +202,9 @@ function signup(event) {
             }, 2000);
         })
         .catch(error => {
-            // Boostrap rasise popups
             console.error('Error:', error);
-            alert("Fail to sign up. Please try again!");
+            alert(error.message); 
+            // alert("Fail to sign up. Please try again!");
         });
 }
 
@@ -207,14 +216,15 @@ function getAccessToken() {
 function signFile(event) {
     event.preventDefault();
 
-    var id = document.getElementById("id_sv").value;
     var school = document.getElementById("school").value;
     var firstName = document.getElementById("firstName").value;
     var lastName = document.getElementById("lastName").value;
     var inputFile = document.getElementById("inputFile").files[0];
     var privateKey = document.getElementById("privateKey").files[0];
-
+    var resDiv = document.getElementById("result");
+    var ins = document.getElementById("Nhà phát hành");
     const reader = new FileReader();
+    
     reader.onload = function (e) {
         var inputFileBase64 = e.target.result.split(",")[1];
         reader.onload = function (e) {
@@ -222,7 +232,6 @@ function signFile(event) {
 
             // Create a JSON object with the form data and file contents
             var jsonData = {
-                id_sv: id,
                 school: school,
                 firstName: firstName,
                 lastName: lastName,
@@ -263,10 +272,15 @@ function signFile(event) {
                     downloadLink.href = URL.createObjectURL(blob);
                     downloadLink.download = 'signed_file.pdf';
                     downloadLink.click();
+                    resDiv.innerHTML = "Kí thành công cho sinh viên có ID " + responseData.id_sv;
+                                        
+                    ins.innerHTML = "Được kí bởi " + responseData.nguoiKi +" thuộc nhà phát hành: " + responseData.nhaPhatHanh;
                     
                 })
                 .catch(error => {
-                    console.error('Error signing file:', error);
+                    console.error('Error:', error);
+                    alert(error.message); 
+                    // console.error('Error signing file:', error);
                     alert("Failed to sign file. Please try again!");
                 });
         };

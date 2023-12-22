@@ -9,7 +9,7 @@ CREATE TABLE Institution (
     institution_id INT AUTO_INCREMENT PRIMARY KEY,
     institution_name VARCHAR(255),
     authority_person VARCHAR(255),
-    email_address VARCHAR(255),
+    email_address VARCHAR(255) UNIQUE,
     hashed_password VARCHAR(255),
     certificate_file LONGBLOB
 );

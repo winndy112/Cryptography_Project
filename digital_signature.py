@@ -36,27 +36,16 @@ class digital_signature():
         sig = self.sk.sign(input_file)
         sign_b64 = base64.b64encode(sig).decode()
         self.signature = sign_b64
-        # return sign_b64
+
+    '''
+    Hàm thêm chữ kí và văn bằng vào trường metadata của văn bằng pdf
+    '''
     
-    # def signing_pdf(self, input_file: str) -> str:
-    #     document = fitz.open(input_file)
-    #     page = document[0]
-    #     message = page.get_text()
-    #     sig = self.sk.sign(message.encode())
-    #     sign_b64 = base64.b64encode(sig)
-    #     document.close()
-    #     self.signature = sign_b64
-
-    '''
-    Hàm thêm chữ kí vào trường metadata của văn bằng pdf
-    '''
-
-    def add_data_to_metadata(self, pdf_file: bytes, cert_file: bytes, output_file: str):
+    def add_data_to_metadata(self, pdf_bytes: bytes, cert_file: bytes, output_file: str):
         try:
-            
-            # Open the PDF file
-            reader =PyPDF2.PdfReader(pdf_file)
             writer = PyPDF2.PdfWriter()
+            pdf_stream = io.BytesIO(pdf_bytes)
+            reader =PyPDF2.PdfReader(pdf_stream)
             metadata= reader.metadata
             title = metadata.title
             author = metadata.author
@@ -76,7 +65,7 @@ class digital_signature():
                 '/Signature': None,
                 '/Certificate': None
             }
-            extracted_metadata['/Signature'] = self.signature.decode()
+            extracted_metadata['/Signature'] = self.signature
             extracted_metadata['/Certificate'] = cert_file.decode()
             writer.append_pages_from_reader(reader)
             for key in extracted_metadata:
@@ -86,13 +75,13 @@ class digital_signature():
         except Exception as e:
             print(f"Error adding signature to PDF metadata: {e}")
 
-
-    def dettach_signature_and_cert(self, input_pdf: UploadFile):
-        contents = input_pdf.file.read()
-        with io.BytesIO(contents) as file:
+    def dettach_signature_and_cert(self, input_pdf: str):
+        with open(input_pdf, "rb") as file:
+        # contents = input_pdf.file.read()
+        # with io.BytesIO(contents) as file:
             pdf_reader = PyPDF2.PdfReader(file)
             meta = pdf_reader.metadata
-        
+        print(meta)
         if "/Signature" in meta:
             self.signature = (str(meta['/Signature']).encode())
         return meta["/Certificate"]
@@ -117,7 +106,7 @@ class digital_signature():
     '''
     Hàm lưu key vào file pem
     '''
-    def SaveSecret2Pem(self, filepath):
+    def SaveSecret2Pem(self, filepath: str):
         falcon_public_key_begin = "------ Begin Falcon Private Key ------\n"
         falcon_public_key_end = "\n------ End Falcon Private Key ------\n"
         serialized_key = pickle.dumps(self.sk)
@@ -138,16 +127,15 @@ class digital_signature():
             file.write(falcon_public_key_end)
 
     ''' 
-    Hàm giải mã key từ file pem 
+    Hàm giải mã key từ bytes được truyền về frontend
     '''
-    def load_private_key(self, file):  
+    def load_private_key(self, file: bytes):  
         try:
             encoded_secret_key = file.decode("utf-8")
             if encoded_secret_key.startswith("------ Begin Falcon Private Key ------\r\n"):
                 encoded_secret_key = encoded_secret_key.split("------ Begin Falcon Private Key ------\r\n")[1]
             if encoded_secret_key.endswith("\r\n------ End Falcon Private Key ------\r\n"):
                 encoded_secret_key = encoded_secret_key.rsplit("\r\n------ End Falcon Private Key ------\r\n", 1)[0]
-            # print(encoded_secret_key[0:50])
             decoded_secret_key = base64.b64decode(encoded_secret_key)   
             secret_key = pickle.loads(decoded_secret_key)
             self.sk = secret_key
@@ -155,7 +143,7 @@ class digital_signature():
         except Exception as e:
             print(f"Error loading secret key: {e}")
 
-    def load_public_key(self, file_path):
+    def load_CA_public_key(self, file_path):
         try:
             with open(file_path, 'r') as file:
                 encoded_public_key = file.read()
@@ -168,6 +156,23 @@ class digital_signature():
             decoded_public_key = base64.b64decode(encoded_public_key)
             public_key = pickle.loads(decoded_public_key)
             self.pk = public_key
+        except Exception as e:
+            return f"Error loading public key: {e}"
+        
+    '''
+    Hàm giải mã key từ file pem
+    '''
+    def load_CA_private_key(self, file_path: str):
+        try:
+            with open(file_path, 'r') as file:
+                encoded_private_key = file.read()
+            if encoded_private_key.startswith("------ Begin Falcon Private Key ------\n"):
+                encoded_private_key = encoded_private_key.split("------ Begin Falcon Private Key ------\n")[1]
+            if encoded_private_key.endswith("\n------ End Falcon Private Key ------\n"):
+                encoded_private_key = encoded_private_key.rsplit("\n------ End Falcon Private Key ------\n", 1)[0]
+            decoded_private_key = base64.b64decode(encoded_private_key)
+            private_key = pickle.loads(decoded_private_key)
+            self.sk = private_key
         except Exception as e:
             return f"Error loading public key: {e}"
         
