@@ -5,7 +5,6 @@ from models import Base, Students, Ins, Quals
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from typing import Annotated
-from starlette.requests import Request
 from fastapi.responses import JSONResponse
 from certificate import parse_cert
 import base64, hashlib, json, logging, qr, pickle, os
@@ -23,21 +22,21 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 class verifyRequest(BaseModel):
     file : str # base64 encode
-
+    pubKey: str #base64 encode
 
 @router.post("/verify")
-async def verify_file(request: Request, db: db_dependency, form_data: verifyRequest):
+async def verify_file(db: db_dependency, form_data: verifyRequest):
     try:
-        
-        _file = form_data.file
         # check nội dung truyền vào
-        if not _file:
+        if not form_data.file or not form_data.pubKey:
             raise HTTPException(status_code=400, detail="Empty file")
-        content = base64.b64decode(_file)
-
-        # tạo cặp key ban đầu
+        content = base64.b64decode(form_data.file)
+        pubkey = base64.b64decode(form_data.pubKey)
+    
+        # load public key
         pair = dsa.digital_signature()
-        
+        pair.load_public_key(pubkey)
+
         # lấy certificate và signature từ trường metadata của file
         cert = pair.dettach_signature_and_cert(content)
         response_data = {}
@@ -72,17 +71,35 @@ async def verify_file(request: Request, db: db_dependency, form_data: verifyRequ
                 response_data["root_ca_name"] = cert_info["Issuer"]
             else: 
                 response_data["root_ca"] = False
-                return response_data
+
+                return JSONResponse(content=response_data)
             
             '''
             Xác thực nơi cấp
             '''
             
-            response_data["institution_name"] = cert_info.get("Subject")
-            response_data["authority_person"] = cert_info["Author"]
             
-            # lấy public key từ certificate
-            pair.pk = cert_info["Public Key"]
+            ins = db.query(Ins).filter(Ins.institution_name == cert_info.get("Subject"), Ins.authority_person == cert_info["Author"]).first()
+
+            if not ins:
+                response_data["result"] = False
+                response_data["reason"] = "Không có nhà phát hành " + cert_info.get("Subject")
+                return JSONResponse(content=response_data)
+            
+            ins_pubkey = dsa.digital_signature()
+            ins_pubkey.load_public_key(ins.public_file)
+
+            # nếu public được submit lên đúng nhà phát hành
+            if str(pair.pk) == str(cert_info["Public Key"]) == str(ins_pubkey.pk):
+                response_data["institution_name"] = ins.institution_name
+                response_data["authority_person"] = ins.authority_person
+
+            else:
+                response_data["result"] = False
+                response_data["reason"] = "Không đúng Public key"
+            
+                return JSONResponse(content=response_data)
+
             tmp = "test/tmp.pdf"
             # xóa cert/sign trong metadata 
             pair.remove_data_from_metadata(content, tmp)
@@ -92,8 +109,10 @@ async def verify_file(request: Request, db: db_dependency, form_data: verifyRequ
             out = "test/pdf_tmp.pdf"
             with open(out, "rb") as file:
                 _content = file.read()
-                verification_result = str(pair.verify(_content))
+                verification_result = pair.verify(_content)
                 response_data["result"] = verification_result
+                if verification_result == False:
+                    response_data["reason"] = "Signature hoặc nội dung văn bằng không hợp lệ!"
             os.remove(tmp)
             os.remove(out)
             #Return JSON response

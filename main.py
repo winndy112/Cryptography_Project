@@ -4,7 +4,7 @@ import pickle
 import PyPDF2
 from fastapi import FastAPI
 import models
-from routers import auth, get, verify, signFile
+from routers import create_key, get, verify, signFile
 from database import engine
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -24,7 +24,7 @@ app.add_middleware(
 models.Base.metadata.create_all(bind=engine) # Tạo một bảng ghi from fastapi import FastAPI
 
 app.include_router(get.router)
-app.include_router(auth.router)
+app.include_router(create_key.router)
 app.include_router(verify.router)
 app.include_router(signFile.router)
 @app.get("/", response_class=HTMLResponse)

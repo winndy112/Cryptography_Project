@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .wrapper {
+            text-align: center;
+        }
+    </style>
+    <title>Verify page</title>
+</head>
+<body>
+    <div>
+        <label for="fileInput" >Choose Qualification file:</label> 
+        <input type="file" id="fileInput">
+        <label for="fileInput" >Choose Public key file:</label> 
+        <input type="File" id="publicFile">
+        <button onclick="verify(event)">Verify</button>
+    </div>
+
+    <div id="result"></div>
+    <script src="main.js"></script>
+</body>
+</html>

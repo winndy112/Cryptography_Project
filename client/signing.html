@@ -1,0 +1,75 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Signing</title>
+        <link rel="stylesheet" type="text/css" href="style.css"> 
+        <style>
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+
+            .wrapper {
+                text-align: center;
+            }
+        </style>
+
+    </head>
+
+    <body>
+
+        <div class="wrapper">
+            <div class="wrapper-heading">
+                <h1>Signing</h1>
+            </div>
+            <!-- Navigation Buttons -->
+            <div id = "navigations">
+                <button onclick="showSigningForm()">Sign File</button>
+                <button onclick="showCreateForm()">Create Private Key</button>
+            </div>
+
+            <!-- createKey Form -->
+            <div id="createKey" style="display: none;">
+                <button onclick="createKey(event)">Create Private Key</button>
+                <div id="result"></div>
+            </div>
+
+            <!-- File Signing Form -->
+            <div id="fileSigningForm" style="display: none;">
+                <h3> Enter information of institution  <br> </h3>
+                <label for="InstitutionName">Institution Name:</label>
+                <input id="InstitutionName" type="text" placeholder="Institution Name">
+                <label for="AuthorityName">Authority Name: </label>
+                <input id="AuthorityName" type="text" placeholder="Authority Name">
+                <label for="Email">Email:</label>
+                <input id="Email" type="text" placeholder="Email">
+
+                <h3> Enter information of student <br> </h3>
+                <label for="school">School:</label>
+                <input id="school" type="text" placeholder="School">
+                <label for="studentName">Student Name:</label>
+                <input id="studentName" type="text" placeholder="Student Name">
+            
+                <label for="inputFile">Qualification File:</label>
+                <input type="file" id="inputFile">
+
+                <label for="privateKey">Private Key:</label>
+                <input type="file" id="privateKey">
+                <div id= "result" > </div>
+                <div id="Nhà phát hành"></div>
+                <button onclick="signFile(event)">Sign File</button>
+            </div>
+
+        </div>
+
+        <script src="main.js"></script>
+    </body>
+
+    </html>

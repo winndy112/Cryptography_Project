@@ -94,16 +94,15 @@ def is_valid_email(email):
 async def create_user(db: db_dependency,
                       create_user_request: CreateUserRequest):
     
+    # Check tính hợp lệ của email
     if not is_valid_email(create_user_request.signupEmail):
         raise HTTPException(status_code=400, detail="Invalid email format")
-    # kiểm tra email đã được đăng kí chưa
+    
     existing_user = db.query(Ins).filter(Ins.email_address == create_user_request.signupEmail).first()
     if existing_user:
         raise HTTPException(detail="Email already exists", status_code=400)
     
-    '''
-    cần dùng tpm
-    '''
+    
     # cặp key của root CA 
     root_ca = dsa.digital_signature()
     root_ca.load_CA_private_key("Root_CA/private.pem")
@@ -111,6 +110,7 @@ async def create_user(db: db_dependency,
     # tạo cặp key cho người dùng
     pair = dsa.digital_signature()
     pair.create_key()
+
     # tạo certificate file
     infor = {
         "Version": "1", # có thể nâng cấp kiểm tra version trước đó
@@ -131,9 +131,8 @@ async def create_user(db: db_dependency,
     encoded_key = base64.b64encode(serialized_key).decode('utf-8')
     infor["Public Key"] = encoded_key
     message = json.dumps(infor, default=str)
-    with open("test.txt", "w") as file:
-        file.write(message)
     hashed_message = hashlib.sha512(message.encode()).digest()
+
     # tính signature các thông tin của user bằng private key của root CA
     sig = root_ca.sk.sign(hashed_message)
     hex_signature = "".join(f"{byte:02x}:" for byte in sig)
@@ -154,6 +153,7 @@ async def create_user(db: db_dependency,
     
     db.add(create_user_model) # insert
     db.commit() # commit insert process
+    
     file = pair.SaveSecret2Pem("./keytmp.pem")
     with open("./keytmp.pem", "rb") as file:
         content = file.read()

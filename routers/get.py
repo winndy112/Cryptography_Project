@@ -8,7 +8,6 @@ from typing import Annotated
 from fastapi.responses import JSONResponse
 import base64
 
-
 def get_db():
     db = SessionLocal()
     try:
@@ -18,29 +17,16 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]    
 router = APIRouter()
 
-# class GetQualsRequest(BaseModel):
-#     student_id: int
-#     school: str
-#     first_name: str
-#     last_name: str
-#     qual_code: int
 
 @router.get("/",  status_code=status.HTTP_200_OK)
-
 @router.post("/get_quals")
 async def get_qualifications(data: dict, db: Session = Depends(get_db)):
     # Extract input parameters from the request data
     student_id = data.get("student_id")
-    school = data.get("school")
-    first_name = data.get("first_name")
-    last_name = data.get("last_name")
     qual_code = data.get("qual_code")
 
     student_info = db.query(Students).filter(
-        Students.id_sv == student_id,
-        Students.school == school,
-        Students.first_name == first_name,
-        Students.last_name == last_name
+        Students.id_sv == student_id
     ).first()
     # check student if exist
     if not student_info:
@@ -54,6 +40,15 @@ async def get_qualifications(data: dict, db: Session = Depends(get_db)):
     # Check qualification if exist
     if not qual_info:
         raise HTTPException(status_code=404, detail="Qualification not found")
+    
+    ins = db.query(Ins).filter(Ins.institution_id == qual_info.institution_id).first()
+    # Get the actual instance using .first() or .all()
+
+    # Check if the institution exists
+    if not ins:
+        raise HTTPException(status_code=404, detail="Institution not found")
+
+    public_base64 = base64.b64encode(ins.public_file).decode("utf-8")
     pdf_file_content = qual_info.pdf_file
     # Assume that the result is a file content (PDF file in this case)
     pdf_base64 = base64.b64encode(pdf_file_content).decode("utf-8")
@@ -61,5 +56,6 @@ async def get_qualifications(data: dict, db: Session = Depends(get_db)):
     
     response_data = {
         "pdf_content_base64": pdf_base64,
+        "public": public_base64
     }
     return JSONResponse(content=response_data)

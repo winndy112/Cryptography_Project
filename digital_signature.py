@@ -1,14 +1,13 @@
 import sys
 sys.path.append('/falcon')
 from falcon import falcon
-import base64
+import base64, pickle, fitz
 import pickle
 import fitz
 import PyPDF2 
 import io
-import os, datetime
-from datetime import  timedelta
-from fastapi import UploadFile
+import os
+
 # GLOBAL VARIABLES
 KEY_LENGTH = 512
 
@@ -121,16 +120,16 @@ class digital_signature():
     Hàm lưu key vào file pem
     '''
     def SaveSecret2Pem(self, filepath: str):
-        falcon_public_key_begin = "------ Begin Falcon Private Key ------\n"
-        falcon_public_key_end = "\n------ End Falcon Private Key ------\n"
+        falcon_Private_key_begin = "------ Begin Falcon Private Key ------\n"
+        falcon_Private_key_end = "\n------ End Falcon Private Key ------\n"
         serialized_key = pickle.dumps(self.sk)
         encoded_key = base64.b64encode(serialized_key).decode('utf-8')
         with open(filepath, 'w') as file:
-            file.write(falcon_public_key_begin)
+            file.write(falcon_Private_key_begin)
             file.write(encoded_key)
-            file.write(falcon_public_key_end)
+            file.write(falcon_Private_key_end)
 
-    def SavePublic2Pem(self, filepath):
+    def SavePublic2Pem(self, filepath: str):
         falcon_public_key_begin = "------ Begin Falcon Public Key ------\n"
         falcon_public_key_end = "\n------ End Falcon Public Key ------\n"
         serialized_key = pickle.dumps(self.pk)
@@ -153,9 +152,22 @@ class digital_signature():
             decoded_secret_key = base64.b64decode(encoded_secret_key)   
             secret_key = pickle.loads(decoded_secret_key)
             self.sk = secret_key
-
+            self.pk = falcon.PublicKey(self.sk)
         except Exception as e:
             print(f"Error loading secret key: {e}")
+    
+    def load_public_key(self, file: bytes):  
+        try:
+            encoded_public_key = file.decode("utf-8")
+            if encoded_public_key.startswith("------ Begin Falcon Public Key ------\r\n"):
+                encoded_public_key = encoded_public_key.split("------ Begin Falcon Public Key ------\r\n")[1]
+            if encoded_public_key.endswith("\r\n------ End Falcon Public Key ------\r\n"):
+                encoded_public_key = encoded_public_key.rsplit("\r\n------ End Falcon Public Key ------\r\n", 1)[0]
+            decoded_public_key = base64.b64decode(encoded_public_key)   
+            public = pickle.loads(decoded_public_key)
+            self.pk = public
+        except Exception as e:
+            print(f"Error loading public key: {e}")
 
     def load_CA_public_key(self, file_path):
         try:
@@ -188,18 +200,5 @@ class digital_signature():
             private_key = pickle.loads(decoded_private_key)
             self.sk = private_key
         except Exception as e:
-            return f"Error loading public key: {e}"
+            return f"Error loading private key: {e}"
         
-'''
-Example Usage:
-'''
-
-# a = digital_signature()
-# a.create_key()
-# a.SaveSecret2Pem("private.pem")
-# a.SavePublic2Pem("public.pem")
-# b = digital_signature()
-# b.load_private_key("private.pem")
-# b.load_public_key("public.pem")       
-# print(b.sk)
-# print(b.pk)
