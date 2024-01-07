@@ -1,41 +1,14 @@
 # import APIRouter
-from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile
-from pydantic import BaseModel
-from passlib.context import CryptContext # for hash password
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from typing import Annotated
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-import logging
-from jose import jwt, JWTError
-from datetime import timedelta, datetime, date
-from fastapi.responses import JSONResponse, FileResponse
-import json
-import hashlib
-import pickle
-import base64
-import os 
+from fastapi.responses import JSONResponse
+import base64,os
 import digital_signature as dsa
-import certificate
+
 
 router = APIRouter()
-
-'''
-Form data request khi user muốn sign up
-'''
-class CreateUserRequest(BaseModel):
-    institutionName: str
-    authority: str
-    Email: str
-    password: str
-
-'''
-Form data request khi user muốn log in
-'''
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
 
 '''
 Lấy session kết nối database
