@@ -18,7 +18,7 @@ This project implements an authentication system for student qualifications usin
 
 ## Achievements
 - Developed a secure method for verifying academic qualifications.
-- Implemented a post-quantum cryptographic signature (Falcon).
+- Applied a post-quantum cryptographic signature (Falcon).
 - Improved the speed of credential authentication with QR code integration for faster and more efficient verification.
 
 ## Open-source Falcon implementation by NIST
