@@ -1,11 +1,7 @@
-I can't provide a detailed summary of the repository directly from the link. However, based on your request, you can create a README file with the following structure:
-
----
-
 # Cryptography Project: Authentication for Student Qualifications
 
 ## Introduction
-This project implements an authentication system for student qualifications using the **Falcon Signatures Algorithm**, a post-quantum cryptography method. The system ensures secure verification of academic credentials through cryptographic techniques.
+This project implements an authentication system for student qualifications using the **Falcon Signatures Algorithm**, a cryptographic signature algorithm submitted to NIST Post-Quantum Cryptography Project on November 30th, 2017.. The system ensures secure verification of academic credentials through cryptographic techniques.
 
 ## Components of the Project
 1. **Falcon Digital Signature**: Core cryptographic functionality.
@@ -24,3 +20,7 @@ This project implements an authentication system for student qualifications usin
 - Developed a secure method for verifying academic qualifications.
 - Implemented a post-quantum cryptographic signature (Falcon).
 - Enhanced security in credential authentication using QR code integration.
+
+## Open-source Falcon implementation by NIST
+- [Information](https://falcon-sign.info/)
+- [An implementation in Python](https://github.com/tprest/falcon.py)
